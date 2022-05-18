@@ -8,6 +8,7 @@ def show_packet_info(pkt):
     print("Data in hex form: ")
     hexdump(pkt)
 
+
 def show_data(data):
     print(data)
     # print(len(data))
@@ -32,13 +33,21 @@ if __name__ == '__main__':
     print(data)
     length = len(data)
 
-    while True:
-        var = input("Enter index of packet from 0 to " + str(length-1) + " : ")
+    print("To end the process enter 'exit'")
+    var = ""
+    while var != "exit":
+        var = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
 
-        if length > int(var) >= 0:
-            print("---------- "+ var + " Packet info ----------")
-            show_packet_info(data[int(var)])
-            print("--------------------------------------------")
+        if var == "exit":
             break
-        else :
+
+        try:
+            index = int(var)
+            if length > int(var) >= 0:
+                print("---------- " + var + " Packet info ----------")
+                show_packet_info(data[int(var)])
+                print("--------------------------------------------")
+            else:
+                print("wrong input try again!")
+        except ValueError:
             print("wrong input try again!")
