@@ -1,4 +1,3 @@
-from graphviz import *
 from scapy.all import *
 
 pcap_data = rdpcap("data.pcap")
@@ -7,8 +6,21 @@ commands = (
     ('help', 'Print this help message'),
     ('sniff', 'Open pcap data'),
     ('conv', 'Print conversations'),
-    ('quit', 'Close the program')
+    ('quit', 'Go back'),
+    ('exit', 'Close the program')
 )
+
+
+def confirmation_message(message):
+    cmd = input(message)
+
+    if cmd == "Yes" or cmd == "Y" or cmd == "y" or cmd == "yes":
+        return True
+    elif cmd == "No" or cmd == "N" or cmd == "n" or cmd == "no":
+        return False
+    else:
+        print('Unknown command.')
+        confirmation_message(message)
 
 
 def show_packet_info(pkt):
@@ -26,9 +38,6 @@ def sniff():
     while True:
         cmd = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
 
-        if cmd in ('quit', 'q'):
-            return False
-
         try:
             index = int(cmd)
             if length > index >= 0:
@@ -36,9 +45,9 @@ def sniff():
                 show_packet_info(pcap_data[index])
                 print("--------------------------------------------")
             else:
-                print("wrong input try again!")
+                interpret(cmd, "")
         except ValueError:
-            print("wrong input try again!")
+            interpret(cmd, "")
 
 
 def interpret(cmd, arguments):
@@ -50,9 +59,12 @@ def interpret(cmd, arguments):
     elif cmd == 'sniff':
         sniff()
     elif cmd == 'conv':
-        pcap_data.conversations(type="jpg", target="> test.jpg")
+        pcap_data.conversations(type="jpg", target="> conversations.jpg")
     elif cmd == 'quit':
-        exit(0)
+        return False
+    elif cmd == 'exit':
+        if confirmation_message("Are you sure you want to close the program? Y/N "):
+            exit(0)
     else:
         print('Unknown command.')
 
