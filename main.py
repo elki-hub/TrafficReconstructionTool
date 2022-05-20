@@ -1,53 +1,70 @@
+from graphviz import *
 from scapy.all import *
+
+pcap_data = rdpcap("data.pcap")
+
+commands = (
+    ('help', 'Print this help message'),
+    ('sniff', 'Open pcap data'),
+    ('conv', 'Print conversations'),
+    ('quit', 'Close the program')
+)
 
 
 def show_packet_info(pkt):
-    print("Source of the IP: " + pkt.src)
-    print("Destination of the IP: " + pkt.dst)
-    print("Protocol: " + re.search("\/.+\/ (\w+) ", pkt.summary()).group(1))
+    param = re.search("\/.+\/ (\w+) ([^\s]+) > ([^\s]+)", pkt.summary())
+    print("Source of the IP: " + param.group(2))
+    print("Destination of the IP: " + param.group(3))
+    print("Protocol: " + param.group(1))
     print("Data in hex form: ")
     hexdump(pkt)
 
 
-def show_data(data):
-    print(data)
-    # print(len(data))
-    pkt = data[1000]
-    # print(pkt)
-    # print(type(pkt))
-    # print(dir(pkt))
-    # print()
-    # print(ls(pkt))
-    # print(lsc())
-    # print(pkt.src)
-    print("summary: " + pkt.summary())
-    pkt.show()
-    print("Show the Source of the IP: " + pkt.src)
-    print("Show the destination of the IP: " + pkt.dst)
-    # print("Show what protocol was used to transmit data: " + pkt)
-    # print("Show data in hex form: " + hexdump(pkt))
+def sniff():
+    print(pcap_data)
+    length = len(pcap_data)
+    while True:
+        cmd = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
 
-
-if __name__ == '__main__':
-    data = rdpcap("data.pcap")
-    print(data)
-    length = len(data)
-
-    print("To end the process enter 'exit'")
-    var = ""
-    while var != "exit":
-        var = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
-
-        if var == "exit":
-            break
+        if cmd in ('quit', 'q'):
+            return False
 
         try:
-            index = int(var)
-            if length > int(var) >= 0:
-                print("---------- " + var + " Packet info ----------")
-                show_packet_info(data[int(var)])
+            index = int(cmd)
+            if length > index >= 0:
+                print("---------- " + cmd + " Packet info ----------")
+                show_packet_info(pcap_data[index])
                 print("--------------------------------------------")
             else:
                 print("wrong input try again!")
         except ValueError:
             print("wrong input try again!")
+
+
+def interpret(cmd, arguments):
+    """Perform command required by user."""
+    if cmd == 'help':
+        print('Available commands:')
+        for name, desc in commands:
+            print('    %s%s' % (name.ljust(28), desc))
+    elif cmd == 'sniff':
+        sniff()
+    elif cmd == 'conv':
+        pcap_data.conversations(type="jpg", target="> test.jpg")
+    elif cmd == 'quit':
+        exit(0)
+    else:
+        print('Unknown command.')
+
+
+if __name__ == '__main__':
+    while True:
+        print('\nWrite command ("help" for details):')
+        try:
+            command = input('> ').split(' ')
+        except (EOFError, KeyboardInterrupt):
+            print('')
+            exit(0)
+        cmd = command[0]
+        arguments = command[1:]
+        interpret(cmd, arguments)
