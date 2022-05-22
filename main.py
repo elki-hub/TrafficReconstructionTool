@@ -1,5 +1,4 @@
 from scapy.all import *
-from scapy.layers.dns import DNS
 from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.l2 import ARP
 
@@ -9,7 +8,7 @@ pcap_data = rdpcap("data.pcap")
 commands = (
     ('help', 'Show available commands'),
     ('sniff', 'Open pcap data'),
-    ('sus', 'Suspicious traffic'),
+    ('sus', 'Print suspicious traffic'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
     ('exit', 'Close the program')
@@ -30,7 +29,7 @@ def filter_packets(pkts):
 
 
 def sus_data():
-    print("*****filtering data: ******")
+    print("*************** Suspicious data: ***************")
     index = 0
     for pkt in pcap_data:
         if UDP in pkt:
@@ -40,7 +39,7 @@ def sus_data():
             if str(pkt.flags) == "DNS":
                 print(str(index) + " " + pkt.summary())
         index = index + 1
-    print("*****the end of filtering*****")
+    print("*************************************************")
 
 
 def confirmation_message(message):
