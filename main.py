@@ -1,4 +1,5 @@
 from scapy.all import *
+from scapy.layers.dns import DNS
 from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.l2 import ARP
 
@@ -8,6 +9,7 @@ pcap_data = rdpcap("data.pcap")
 commands = (
     ('help', 'Show available commands'),
     ('sniff', 'Open pcap data'),
+    ('sus', 'Suspicious traffic'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
     ('exit', 'Close the program')
@@ -27,9 +29,18 @@ def filter_packets(pkts):
     return filtered
 
 
-def extract_payloads():
+def sus_data():
+    print("*****filtering data: ******")
+    index = 0
     for pkt in pcap_data:
-        print(pkt.summary())
+        if UDP in pkt:
+            if pkt['UDP'].sport != 1900 or pkt['UDP'].dport != 1900:
+                print(str(index) + " " + pkt.summary())
+        elif TCP in pkt:
+            if str(pkt.flags) == "DNS":
+                print(str(index) + " " + pkt.summary())
+        index = index + 1
+    print("*****the end of filtering*****")
 
 
 def confirmation_message(message):
@@ -45,6 +56,7 @@ def confirmation_message(message):
 
 
 def show_packet_info(pkt):
+    print(ls(pkt))
     if TCP in pkt:
         print("Source of the IP: " + pkt[1].src + ":" + str(pkt['TCP'].sport))
         print("Destination of the IP: " + pkt[1].dst + ":" + str(pkt['TCP'].dport))
@@ -78,7 +90,7 @@ def sniff():
     print(pcap_data)
     length = len(pcap_data)
     # print(pcap_data.show())
-    print(len(filter_packets(pcap_data)))
+    #print(len(filter_packets(pcap_data)))
     while True:
         cmd = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
 
@@ -100,6 +112,8 @@ def interpret(cmd, arguments):
         print('Available commands:')
         for name, desc in commands:
             print('    %s%s' % (name.ljust(28), desc))
+    elif cmd == 'sus':
+        sus_data()
     elif cmd == 'sniff':
         sniff()
     elif cmd == 'conv':
