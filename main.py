@@ -1,14 +1,35 @@
 from scapy.all import *
+from scapy.layers.inet import IP, TCP, UDP
+from scapy.layers.l2 import ARP
 
 pcap_data = rdpcap("data.pcap")
 
+
 commands = (
-    ('help', 'Print this help message'),
+    ('help', 'Show available commands'),
     ('sniff', 'Open pcap data'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
     ('exit', 'Close the program')
 )
+
+
+def filter_packets(pkts):
+    filtered = [pkt for pkt in pkts if UDP in pkt]
+    # for pkt in pkts:
+    #     if TCP in pkt:
+    #         print(pkt.summary())
+    # filtered = [pkt for pkt in pkts if TCP in pkt and ((
+    #             pkt[IP].src == src and pkt[IP].dst == dst and pkt[TCP].sport == sp and
+    #             pkt[TCP].dport == dp) or (
+    #             pkt[IP].src == dst and pkt[IP].dst == src and pkt[TCP].sport == dp and
+    #             pkt[TCP].dport == sp))]
+    return filtered
+
+
+def extract_payloads():
+    for pkt in pcap_data:
+        print(pkt.summary())
 
 
 def confirmation_message(message):
@@ -24,10 +45,31 @@ def confirmation_message(message):
 
 
 def show_packet_info(pkt):
-    param = re.search("\/.+\/ (\w+) ([^\s]+) > ([^\s]+)", pkt.summary())
-    print("Source of the IP: " + param.group(2))
-    print("Destination of the IP: " + param.group(3))
-    print("Protocol: " + param.group(1))
+    if TCP in pkt:
+        print("Source of the IP: " + pkt[1].src + ":" + str(pkt['TCP'].sport))
+        print("Destination of the IP: " + pkt[1].dst + ":" + str(pkt['TCP'].dport))
+        print("Protocol: " + "TCP")
+
+    elif UDP in pkt:
+        description = re.search("\/ IP \/ (\w+) /?(.+)", pkt.summary())
+        print("Source of the IP: " + pkt[1].src + ":" + str(pkt['UDP'].sport))
+        print("Destination of the IP: " + pkt[1].dst + ":" + str(pkt['UDP'].dport))
+        print("Protocol: " + description.group(1))
+        print("Description: " + description.group(2))
+    elif IP in pkt:
+        print("Source of the IP: " + pkt['IP'].src)
+        print("Destination of the IP: " + pkt['IP'].dst)
+        print("Protocol: " + "none")
+    elif ARP in pkt:
+        description = re.search("\/ (ARP) ([^\d]+) ([^\s]+) (\w+) ([^\s]+)", pkt.summary())
+        print("Source of the IP: " + str(pkt['ARP'].psrc))
+        print("Destination of the IP: " + str(pkt['ARP'].pdst))
+        print("Protocol: " + description.group(1))
+        print("Description: " + description.group(0))
+    else:
+        print("This is else")
+        print(pkt.summary())
+
     print("Data in hex form: ")
     hexdump(pkt)
 
@@ -35,6 +77,8 @@ def show_packet_info(pkt):
 def sniff():
     print(pcap_data)
     length = len(pcap_data)
+    # print(pcap_data.show())
+    print(len(filter_packets(pcap_data)))
     while True:
         cmd = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
 
