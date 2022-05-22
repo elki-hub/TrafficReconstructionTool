@@ -33,14 +33,21 @@ def filter_packets(pkts):
 def sus_data():
     print("*************** Suspicious data: ***************")
     index = 0
+    # print(pcap_data[100].time)
+    # print(pcap_data[100].layers())
+    # print(pcap_data[100].display())
+    # print(pcap_data[100].fields)
     for pkt in pcap_data:
-        if UDP in pkt:
-            if pkt['UDP'].sport != 1900 or pkt['UDP'].dport != 1900:
-                print(str(index) + " " + pkt.summary())
-        elif TCP in pkt:
-            if str(pkt.flags) == "DNS":
-                print(str(index) + " " + pkt.summary())
-        index = index + 1
+        print(pkt.time)
+        # if UDP in pkt:
+        #     if pkt['UDP'].sport != 1900 or pkt['UDP'].dport != 1900:
+        #         print(str(index) + " " + pkt.summary())
+        # elif TCP in pkt:
+        #     if str(pkt.flags) == "DNS":
+        #         print(str(index) + " " + pkt.summary())
+        #if pkt.dst != "ff:ff:ff:ff:ff:ff":
+
+        # index = index + 1
     print("*************************************************")
 
 
@@ -92,6 +99,7 @@ def det(arguments):
         return
     try:
         index = int(arguments[0])
+        print(index)
         if len(arguments) > 1 and arguments[1] == "-f":
             return det_full(arguments)
         if len(pcap_data) > index >= 0:
@@ -147,8 +155,10 @@ def sniff():
 
         if len(arguments) > 0:
             return interpret(cmd, arguments)
+        elif cmd == "quit":
+            return
         else:
-            det(cmd)
+            det([cmd])
 
 
 def interpret(cmd, arguments):
