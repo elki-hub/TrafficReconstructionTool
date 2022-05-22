@@ -8,7 +8,7 @@ pcap_data = rdpcap("data.pcap")
 commands = (
     ('help', 'Show available commands'),
     ('sniff', 'Open pcap data'),
-    ('det', 'Print detailed traffic info'),
+    ('det <index>', 'Print detailed packet info'),
     ('sus', 'Print suspicious traffic'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
@@ -104,15 +104,17 @@ def det(arguments):
 def sniff():
     print(pcap_data)
     length = len(pcap_data)
-    # print(pcap_data.show())
-    #print(len(filter_packets(pcap_data)))
     while True:
         print("Enter index of packet from 0 to " + str(length - 1) + " : ")
-        cmd = input("> ")
-        if cmd == "quit":
-            return False
+        command = input('> ').split(' ')
+
+        cmd = command[0]
+        arguments = command[1:]
+
+        if len(arguments) > 0:
+            return interpret(cmd, arguments)
         else:
-            det([cmd])
+            det(cmd)
 
 
 def interpret(cmd, arguments):
