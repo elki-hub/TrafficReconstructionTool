@@ -107,8 +107,12 @@ def sniff():
     # print(pcap_data.show())
     #print(len(filter_packets(pcap_data)))
     while True:
-        cmd = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
-        det([cmd])
+        print("Enter index of packet from 0 to " + str(length - 1) + " : ")
+        cmd = input("> ")
+        if cmd == "quit":
+            return False
+        else:
+            det([cmd])
 
 
 def interpret(cmd, arguments):
@@ -135,8 +139,9 @@ def interpret(cmd, arguments):
 
 
 if __name__ == '__main__':
+    print('\n')
     while True:
-        print('\nWrite command ("help" for details):')
+        print('Write command ("help" for details):')
         try:
             command = input('> ').split(' ')
         except (EOFError, KeyboardInterrupt):
