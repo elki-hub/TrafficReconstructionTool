@@ -9,6 +9,7 @@ commands = (
     ('help', 'Show available commands'),
     ('sniff', 'Open pcap data'),
     ('det <index>', 'Print detailed packet info'),
+    ('dump <index>', 'Print detailed packet diagram'),
     ('sus', 'Print suspicious traffic'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
@@ -91,10 +92,43 @@ def det(arguments):
         return
     try:
         index = int(arguments[0])
+        if len(arguments) > 1 and arguments[1] == "-f":
+            return det_full(arguments)
         if len(pcap_data) > index >= 0:
             print("---------- " + arguments[0] + " Packet info ----------")
             show_packet_info(pcap_data[index])
             print("--------------------------------------------")
+        else:
+            print("Packet index value has to be between 0 and " + str(len(pcap_data)))
+    except ValueError:
+        interpret(arguments[0], "")
+
+
+def det_full(arguments):
+    if len(arguments) == 0:
+        print("Packet index value is missing")
+        return
+    try:
+        index = int(arguments[0])
+        if len(pcap_data) > index >= 0:
+            print("---------- " + arguments[0] + " Packet info ----------")
+            pcap_data[index].show()
+            print("--------------------------------------------")
+        else:
+            print("Packet index value has to be between 0 and " + str(len(pcap_data)))
+    except ValueError:
+        interpret(arguments[0], "")
+
+
+def dump(arguments):
+    if len(arguments) == 0:
+        print("Packet index value is missing")
+        return
+    try:
+        index = int(arguments[0])
+
+        if len(pcap_data) > index >= 0:
+            pcap_data[index].pdfdump(layer_shift=1)
         else:
             print("Packet index value has to be between 0 and " + str(len(pcap_data)))
     except ValueError:
@@ -129,6 +163,8 @@ def interpret(cmd, arguments):
         sniff()
     elif cmd == 'det':
         det(arguments)
+    elif cmd == 'dump':
+        dump(arguments)
     elif cmd == 'conv':
         pcap_data.conversations(type="jpg", target="> conversations.jpg")
     elif cmd == 'quit':
