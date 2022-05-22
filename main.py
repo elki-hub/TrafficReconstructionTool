@@ -8,6 +8,7 @@ pcap_data = rdpcap("data.pcap")
 commands = (
     ('help', 'Show available commands'),
     ('sniff', 'Open pcap data'),
+    ('det', 'Print detailed traffic info'),
     ('sus', 'Print suspicious traffic'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
@@ -55,7 +56,6 @@ def confirmation_message(message):
 
 
 def show_packet_info(pkt):
-    print(ls(pkt))
     if TCP in pkt:
         print("Source of the IP: " + pkt[1].src + ":" + str(pkt['TCP'].sport))
         print("Destination of the IP: " + pkt[1].dst + ":" + str(pkt['TCP'].dport))
@@ -85,6 +85,22 @@ def show_packet_info(pkt):
     hexdump(pkt)
 
 
+def det(arguments):
+    if len(arguments) == 0:
+        print("Packet index value is missing")
+        return
+    try:
+        index = int(arguments[0])
+        if len(pcap_data) > index >= 0:
+            print("---------- " + arguments[0] + " Packet info ----------")
+            show_packet_info(pcap_data[index])
+            print("--------------------------------------------")
+        else:
+            print("Packet index value has to be between 0 and " + str(len(pcap_data)))
+    except ValueError:
+        interpret(arguments[0], "")
+
+
 def sniff():
     print(pcap_data)
     length = len(pcap_data)
@@ -92,17 +108,7 @@ def sniff():
     #print(len(filter_packets(pcap_data)))
     while True:
         cmd = input("Enter index of packet from 0 to " + str(length - 1) + " : ")
-
-        try:
-            index = int(cmd)
-            if length > index >= 0:
-                print("---------- " + cmd + " Packet info ----------")
-                show_packet_info(pcap_data[index])
-                print("--------------------------------------------")
-            else:
-                interpret(cmd, "")
-        except ValueError:
-            interpret(cmd, "")
+        det([cmd])
 
 
 def interpret(cmd, arguments):
@@ -115,6 +121,8 @@ def interpret(cmd, arguments):
         sus_data()
     elif cmd == 'sniff':
         sniff()
+    elif cmd == 'det':
+        det(arguments)
     elif cmd == 'conv':
         pcap_data.conversations(type="jpg", target="> conversations.jpg")
     elif cmd == 'quit':
