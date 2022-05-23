@@ -3,7 +3,7 @@ from scapy.all import *
 from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.l2 import ARP
 
-pcap_data = rdpcap("data.pcap")
+pcap_data = rdpcap("exercise1.pcap")
 rawdata = pygeoip.GeoIP('GeoLiteCity.dat')
 
 commands = (
