@@ -1,15 +1,17 @@
+import pygeoip
 from scapy.all import *
 from scapy.layers.inet import IP, TCP, UDP
 from scapy.layers.l2 import ARP
 
 pcap_data = rdpcap("data.pcap")
-
+rawdata = pygeoip.GeoIP('GeoLiteCity.dat')
 
 commands = (
     ('help', 'Show available commands'),
     ('sniff', 'Open pcap data'),
     ('det <index>', 'Print detailed packet info'),
     ('dump <index>', 'Print detailed packet diagram'),
+    ('stats', 'Print suspicious traffic'),
     ('sus', 'Print suspicious traffic'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
@@ -19,35 +21,26 @@ commands = (
 
 def filter_packets(pkts):
     filtered = [pkt for pkt in pkts if UDP in pkt]
-    # for pkt in pkts:
-    #     if TCP in pkt:
-    #         print(pkt.summary())
-    # filtered = [pkt for pkt in pkts if TCP in pkt and ((
-    #             pkt[IP].src == src and pkt[IP].dst == dst and pkt[TCP].sport == sp and
-    #             pkt[TCP].dport == dp) or (
-    #             pkt[IP].src == dst and pkt[IP].dst == src and pkt[TCP].sport == dp and
-    #             pkt[TCP].dport == sp))]
     return filtered
+
+
+def stats():
+    print("*************** Statistics **********************")
+
+    print("*************************************************")
 
 
 def sus_data():
     print("*************** Suspicious data: ***************")
     index = 0
-    # print(pcap_data[100].time)
-    # print(pcap_data[100].layers())
-    # print(pcap_data[100].display())
-    # print(pcap_data[100].fields)
     for pkt in pcap_data:
-        print(pkt.time)
-        # if UDP in pkt:
-        #     if pkt['UDP'].sport != 1900 or pkt['UDP'].dport != 1900:
-        #         print(str(index) + " " + pkt.summary())
-        # elif TCP in pkt:
-        #     if str(pkt.flags) == "DNS":
-        #         print(str(index) + " " + pkt.summary())
-        #if pkt.dst != "ff:ff:ff:ff:ff:ff":
-
-        # index = index + 1
+        if UDP in pkt:
+            if pkt['UDP'].sport != 1900 or pkt['UDP'].dport != 1900:
+                print("* " + str(index) + " " + pkt.summary())
+        elif TCP in pkt:
+            if str(pkt.flags) == "DNS":
+                print("* " + str(index) + " " + pkt.summary())
+        index = index + 1
     print("*************************************************")
 
 
@@ -63,32 +56,53 @@ def confirmation_message(message):
         confirmation_message(message)
 
 
-def show_packet_info(pkt):
-    if TCP in pkt:
-        print("Source of the IP: " + pkt[1].src + ":" + str(pkt['TCP'].sport))
-        print("Destination of the IP: " + pkt[1].dst + ":" + str(pkt['TCP'].dport))
-        print("Protocol: " + "TCP")
+def get_location(ip):
+    try:
+        return rawdata.record_by_name(ip)['country_name']
+    except:
+        return ""
 
+
+def show_packet_info(pkt):
+    protocol = "none"
+    description = ""
+
+    if TCP in pkt:
+        src = pkt[1].src + ":" + str(pkt[2].sport)
+        dst = pkt[1].dst + ":" + str(pkt[2].dport)
+        protocol = "TCP"
+        dst_country = get_location(pkt[1].src)
+        src_country = get_location(pkt[1].dst)
     elif UDP in pkt:
-        description = re.search("\/ IP \/ (\w+) /?(.+)", pkt.summary())
-        print("Source of the IP: " + pkt[1].src + ":" + str(pkt['UDP'].sport))
-        print("Destination of the IP: " + pkt[1].dst + ":" + str(pkt['UDP'].dport))
-        print("Protocol: " + description.group(1))
-        print("Description: " + description.group(2))
+        src = pkt[1].src + ":" + str(pkt[2].sport)
+        dst = pkt[1].dst + ":" + str(pkt[2].dport)
+        protocol = "UDP"
+        description = re.search("\/ IP \/ (\w+) /?(.+)", pkt.summary()).group(0)
+        dst_country = get_location(pkt[1].src)
+        src_country = get_location(pkt[1].dst)
     elif IP in pkt:
-        print("Source of the IP: " + pkt['IP'].src)
-        print("Destination of the IP: " + pkt['IP'].dst)
-        print("Protocol: " + "none")
+        src = pkt['IP'].src
+        dst = pkt['IP'].dst
+        dst_country = src
+        src_country = dst
+        if pkt['IP'].proto == 2:
+            protocol = "IGMP"
     elif ARP in pkt:
-        description = re.search("\/ (ARP) ([^\d]+) ([^\s]+) (\w+) ([^\s]+)", pkt.summary())
-        print("Source of the IP: " + str(pkt['ARP'].psrc))
-        print("Destination of the IP: " + str(pkt['ARP'].pdst))
-        print("Protocol: " + description.group(1))
-        print("Description: " + description.group(0))
+        description = re.search("\/ (ARP) ([^\d]+) ([^\s]+) (\w+) ([^\s]+)", pkt.summary()).group(0)
+        protocol = "ARP"
+        src = str(pkt['ARP'].psrc)
+        dst = str(pkt['ARP'].pdst)
+        dst_country = src
+        src_country = dst
     else:
         print("This is else")
-        print(pkt.summary())
+        return print(pkt.summary())
 
+    print("Source of the IP: " + src + " " + src_country)
+    print("Destination of the IP: " + dst + " " + dst_country)
+    print("Protocol: " + protocol)
+    print("Description: " + description)
+    print("Time stamp: " + str(datetime.fromtimestamp(int(pkt.time))))
     print("Data in hex form: ")
     hexdump(pkt)
 
@@ -99,7 +113,6 @@ def det(arguments):
         return
     try:
         index = int(arguments[0])
-        print(index)
         if len(arguments) > 1 and arguments[1] == "-f":
             return det_full(arguments)
         if len(pcap_data) > index >= 0:
@@ -167,14 +180,16 @@ def interpret(cmd, arguments):
         print('Available commands:')
         for name, desc in commands:
             print('    %s%s' % (name.ljust(28), desc))
-    elif cmd == 'sus':
-        sus_data()
     elif cmd == 'sniff':
         sniff()
     elif cmd == 'det':
         det(arguments)
     elif cmd == 'dump':
         dump(arguments)
+    elif cmd == 'stats':
+        stats()
+    elif cmd == 'sus':
+        sus_data()
     elif cmd == 'conv':
         pcap_data.conversations(type="jpg", target="> conversations.jpg")
     elif cmd == 'quit':
