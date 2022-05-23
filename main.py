@@ -76,8 +76,8 @@ def show_packet_info(pkt):
     elif IP in pkt:
         src = pkt['IP'].src
         dst = pkt['IP'].dst
-        dst_country = src
-        src_country = dst
+        dst_country = get_location(src)
+        src_country = get_location(dst)
         if pkt['IP'].proto == 2:
             protocol = "IGMP"
     elif ARP in pkt:
@@ -85,8 +85,8 @@ def show_packet_info(pkt):
         protocol = "ARP"
         src = str(pkt['ARP'].psrc)
         dst = str(pkt['ARP'].pdst)
-        dst_country = src
-        src_country = dst
+        dst_country = get_location(src)
+        src_country = get_location(dst)
     else:
         print("This is else")
         return print(pkt.summary())
