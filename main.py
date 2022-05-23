@@ -11,7 +11,6 @@ commands = (
     ('sniff', 'Open pcap data'),
     ('det <index>', 'Print detailed packet info'),
     ('dump <index>', 'Print detailed packet diagram'),
-    ('stats', 'Print suspicious traffic'),
     ('sus', 'Print suspicious traffic'),
     ('conv', 'Print conversations'),
     ('quit', 'Go back'),
@@ -22,12 +21,6 @@ commands = (
 def filter_packets(pkts):
     filtered = [pkt for pkt in pkts if UDP in pkt]
     return filtered
-
-
-def stats():
-    print("*************** Statistics **********************")
-
-    print("*************************************************")
 
 
 def sus_data():
@@ -186,8 +179,6 @@ def interpret(cmd, arguments):
         det(arguments)
     elif cmd == 'dump':
         dump(arguments)
-    elif cmd == 'stats':
-        stats()
     elif cmd == 'sus':
         sus_data()
     elif cmd == 'conv':
